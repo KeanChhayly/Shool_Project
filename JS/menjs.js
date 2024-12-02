@@ -116,7 +116,7 @@ function handleSeleted(id) {
                       
                       <div class="btn__container">
                         <button class="btn btn-light h-50 my-auto" onclick="handleMin(this)">-</button>  
-                        <p class="mt-auto mb-auto res__count text-light">0</p>
+                        <p class="mt-auto mb-auto res__count text-light">1</p>
                                
                         <button class="btn btn-light h-50 my-auto" onclick="handlePlus(this)">+</button> 
                         <p class="delete" onclick="handleDelete(${item.id})">x</p>
@@ -132,9 +132,10 @@ function handleSeleted(id) {
 }
 function addSelectedItemToTable(item) {
   const tableBody = document.querySelector(".selected-items-table tbody");
+  const totalElement = document.querySelector(".total");
 
-  if (!tableBody) {
-    console.error("Table body not found!"); // Debugging line
+  if (!tableBody || !totalElement) {
+    console.error("Required elements not found!"); // Debugging line
     return;
   }
 
@@ -144,31 +145,48 @@ function addSelectedItemToTable(item) {
   );
 
   if (!existingRow) {
-    const totalElement = document.querySelector(".total");
     const row = document.createElement("tr");
-
     row.dataset.id = item.id; // Store the ID to avoid duplicates
 
     // Calculate the effective price (considering discount)
     const effectivePrice = item.dis ? item.dis : item.price;
-
-    // Update the total sum
-    let currentTotal = parseFloat(totalElement.textContent) || 0;
-    currentTotal += effectivePrice;
-    totalElement.textContent = currentTotal.toFixed(2); // Display with 2 decimal places
 
     // Insert item details into the table row
     row.innerHTML = `
       <td>${item.title}</td>
       <td>${item.price}$</td>
       <td>${item.dis ? item.dis + "$" : "No discount"}</td>
+      <td>
+        <input type="number" class="quantity" value="1" min="1" style="width: 50px;">
+      </td>
+      <td class="sub-total">${effectivePrice.toFixed(2)}$</td>
     `;
     tableBody.appendChild(row);
 
-    console.log("Item added to table:", item); // Debugging line
+    // Attach event listener to the quantity input field
+    const quantityInput = row.querySelector(".quantity");
+    quantityInput.addEventListener("input", () =>
+      updateTotal(tableBody, totalElement)
+    );
+
+    // Update the total after adding the item
+    updateTotal(tableBody, totalElement);
   } else {
     console.log("Item already exists in the table:", item); // Debugging line
   }
+}
+
+// Function to update the total
+function updateTotal(tableBody, totalElement) {
+  let total = 0;
+
+  Array.from(tableBody.children).forEach((row) => {
+    const quantity = parseInt(row.querySelector(".quantity").value, 10) || 1;
+    const price = parseFloat(row.querySelector(".sub-total").textContent) || 0;
+    total += quantity * price;
+  });
+
+  totalElement.textContent = total.toFixed(2); // Display with 2 decimal places
 }
 
 // ===============================================================
